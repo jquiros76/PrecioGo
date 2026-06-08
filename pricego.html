@@ -1,0 +1,1490 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PriceGo — Precio inteligente para tu negocio</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root {
+  --bg: #f5f4f0;
+  --surface: #ffffff;
+  --surface2: #faf9f6;
+  --border: #e8e5de;
+  --border2: #d4cfc4;
+  --text: #1a1815;
+  --text2: #5c574e;
+  --text3: #9c9488;
+  --accent: #ff4f17;
+  --accent2: #ff7a4d;
+  --accent-bg: #fff2ee;
+  --green: #16a34a;
+  --green-bg: #f0fdf4;
+  --blue: #2563eb;
+  --blue-bg: #eff6ff;
+  --amber: #d97706;
+  --amber-bg: #fffbeb;
+  --red: #dc2626;
+  --red-bg: #fef2f2;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --font-display: 'Outfit', sans-serif;
+  --font-body: 'Plus Jakarta Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --transition: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+[data-theme="dark"] {
+  --bg: #111009;
+  --surface: #1c1a16;
+  --surface2: #242118;
+  --border: #2e2b24;
+  --border2: #3d3930;
+  --text: #f0ede6;
+  --text2: #a09880;
+  --text3: #5c5748;
+  --accent: #ff5f2e;
+  --accent2: #ff8a61;
+  --accent-bg: #2a1a12;
+  --green: #22c55e;
+  --green-bg: #0f2a1a;
+  --blue: #60a5fa;
+  --blue-bg: #0f1f3a;
+  --amber: #fbbf24;
+  --amber-bg: #2a1f0a;
+  --red: #f87171;
+  --red-bg: #2a0f0f;
+  --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 4px 12px rgba(0,0,0,0.2);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.35), 0 1px 4px rgba(0,0,0,0.2);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 15px;
+  line-height: 1.6;
+  transition: background var(--transition), color var(--transition);
+}
+/* ── HEADER ── */
+.header {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.header-inner {
+  max-width: 1400px; margin: 0 auto;
+  padding: 0 20px;
+  height: 58px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px;
+}
+.logo {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--font-display);
+  font-size: 20px; font-weight: 800;
+  color: var(--text); text-decoration: none;
+}
+.logo-icon {
+  width: 32px; height: 32px;
+  background: var(--accent);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+.logo span { color: var(--accent); }
+.header-right { display: flex; align-items: center; gap: 10px; }
+.currency-select {
+  padding: 6px 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 13px; font-weight: 500;
+  cursor: pointer; outline: none;
+  transition: border-color var(--transition);
+}
+.currency-select:hover { border-color: var(--accent); }
+.btn-icon {
+  width: 36px; height: 36px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface2);
+  color: var(--text2);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px;
+  transition: all var(--transition);
+}
+.btn-icon:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+/* ── LAYOUT ── */
+.app {
+  max-width: 1400px; margin: 0 auto;
+  padding: 24px 20px;
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 20px;
+}
+@media (max-width: 1024px) { .app { grid-template-columns: 1fr; } }
+/* ── TABS ── */
+.tabs {
+  display: flex; gap: 2px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 4px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+}
+.tab {
+  flex: 1; min-width: fit-content;
+  padding: 8px 14px;
+  border: none; background: none;
+  border-radius: 9px;
+  font-family: var(--font-body);
+  font-size: 13px; font-weight: 500;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+  display: flex; align-items: center; gap: 6px;
+}
+.tab.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+.tab:hover:not(.active) { color: var(--text); background: var(--border); }
+/* ── CARDS ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+  transition: border-color var(--transition);
+}
+.card:last-child { margin-bottom: 0; }
+.card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+.card-title {
+  font-family: var(--font-display);
+  font-size: 15px; font-weight: 700;
+  color: var(--text);
+  display: flex; align-items: center; gap: 8px;
+}
+.card-title-icon {
+  width: 28px; height: 28px;
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+.icon-orange { background: var(--accent-bg); color: var(--accent); }
+.icon-green { background: var(--green-bg); color: var(--green); }
+.icon-blue { background: var(--blue-bg); color: var(--blue); }
+.icon-amber { background: var(--amber-bg); color: var(--amber); }
+/* ── FORM ELEMENTS ── */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-grid-3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; }
+@media (max-width: 600px) {
+  .form-grid, .form-grid-3 { grid-template-columns: 1fr; }
+}
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label {
+  font-size: 11px; font-weight: 600;
+  color: var(--text3);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.field input, .field select, .field textarea {
+  padding: 9px 11px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 14px;
+  outline: none;
+  transition: all var(--transition);
+  width: 100%;
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  border-color: var(--accent);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+.field input::placeholder { color: var(--text3); }
+.field select { cursor: pointer; }
+/* ── INGREDIENT ROW ── */
+.ingredient-list { display: flex; flex-direction: column; gap: 10px; }
+.ingredient-row {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  position: relative;
+  animation: slideIn 0.2s ease;
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.ingredient-row-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.ingredient-name-badge {
+  font-size: 12px; font-weight: 600;
+  color: var(--text2);
+  background: var(--border);
+  padding: 3px 8px; border-radius: 4px;
+}
+.ingredient-result {
+  font-size: 11px; font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-bg);
+  padding: 3px 8px; border-radius: 4px;
+  white-space: nowrap;
+}
+.ing-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 8px; }
+@media (max-width: 700px) { .ing-grid { grid-template-columns: 1fr 1fr; } }
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 13px; font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover { background: var(--accent2); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(255,79,23,0.3); }
+.btn-secondary {
+  background: var(--surface2);
+  color: var(--text2);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+.btn-ghost {
+  background: none;
+  color: var(--text3);
+  padding: 6px 10px;
+}
+.btn-ghost:hover { color: var(--red); background: var(--red-bg); }
+.btn-danger {
+  background: var(--red-bg);
+  color: var(--red);
+  border: 1px solid var(--red-bg);
+}
+.btn-danger:hover { background: var(--red); color: #fff; }
+.btn-sm { padding: 6px 11px; font-size: 12px; }
+.btn-full { width: 100%; justify-content: center; }
+/* ── SIDEBAR / DASHBOARD ── */
+.sidebar { position: relative; }
+.sidebar-sticky { position: sticky; top: 78px; }
+.metric-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
+}
+.metric-label {
+  font-size: 11px; font-weight: 600;
+  color: var(--text3);
+  text-transform: uppercase; letter-spacing: 0.06em;
+  margin-bottom: 6px;
+  display: flex; align-items: center; gap: 5px;
+}
+.metric-value {
+  font-family: var(--font-mono);
+  font-size: 26px; font-weight: 700;
+  color: var(--text);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+.metric-value.positive { color: var(--green); }
+.metric-value.negative { color: var(--red); }
+.metric-sub {
+  font-size: 12px; color: var(--text3);
+  margin-top: 4px;
+}
+.metric-bar {
+  height: 5px;
+  background: var(--border);
+  border-radius: 3px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+.metric-bar-fill {
+  height: 100%;
+  background: var(--green);
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+.metric-bar-fill.accent { background: var(--accent); }
+.metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.mini-metric {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+}
+.mini-metric .label { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; }
+.mini-metric .value { font-family: var(--font-mono); font-size: 16px; font-weight: 600; margin-top: 2px; letter-spacing: -0.02em; }
+/* ── PRODUCT LIST ── */
+.product-item {
+  display: flex; align-items: center;
+  padding: 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  gap: 12px;
+  cursor: pointer;
+  transition: all var(--transition);
+  margin-bottom: 8px;
+  animation: slideIn 0.2s ease;
+}
+.product-item:hover { border-color: var(--accent); box-shadow: var(--shadow); }
+.product-item.active { border-color: var(--accent); background: var(--accent-bg); }
+.product-emoji { font-size: 22px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; background: var(--border); border-radius: 8px; flex-shrink: 0; }
+.product-info { flex: 1; min-width: 0; }
+.product-name { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.product-meta { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.product-price { font-family: var(--font-mono); font-size: 14px; font-weight: 600; color: var(--green); white-space: nowrap; letter-spacing: -0.01em; }
+/* ── CHART ── */
+.chart-wrap {
+  height: 180px;
+  position: relative;
+  margin-top: 12px;
+}
+/* ── MARGIN SLIDER ── */
+.slider-wrap { position: relative; margin: 8px 0; }
+input[type="range"] {
+  width: 100%;
+  -webkit-appearance: none;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--border);
+  outline: none;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--accent-bg);
+  transition: transform var(--transition);
+}
+input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+.slider-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--text3); margin-top: 4px; }
+/* ── BADGE ── */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px; border-radius: 4px;
+  font-size: 11px; font-weight: 600;
+}
+.badge-green { background: var(--green-bg); color: var(--green); }
+.badge-red { background: var(--red-bg); color: var(--red); }
+.badge-amber { background: var(--amber-bg); color: var(--amber); }
+.badge-blue { background: var(--blue-bg); color: var(--blue); }
+/* ── PRODUCT COMPONENT ROW ── */
+.comp-list { display: flex; flex-direction: column; gap: 8px; }
+.comp-row {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  animation: slideIn 0.2s ease;
+}
+.comp-row .comp-name { flex: 1; font-size: 13px; font-weight: 500; }
+.comp-row .comp-qty { width: 70px; }
+.comp-row .comp-unit { font-size: 11px; color: var(--text3); width: 40px; }
+.comp-row .comp-cost { font-size: 12px; font-weight: 700; color: var(--accent); white-space: nowrap; min-width: 70px; text-align: right; }
+/* ── DIVIDER ── */
+.divider { height: 1px; background: var(--border); margin: 16px 0; }
+/* ── TOAST ── */
+.toast-wrap {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  z-index: 9999;
+  display: flex; flex-direction: column; gap: 8px;
+  pointer-events: none;
+}
+.toast {
+  background: var(--text);
+  color: var(--bg);
+  padding: 10px 18px;
+  border-radius: 100px;
+  font-size: 13px; font-weight: 500;
+  box-shadow: var(--shadow-md);
+  animation: toastIn 0.3s ease;
+  pointer-events: auto;
+  white-space: nowrap;
+}
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+/* ── SECTION HEADING ── */
+.section-title {
+  font-family: var(--font-display);
+  font-size: 22px; font-weight: 800;
+  margin-bottom: 4px;
+}
+.section-sub { font-size: 13px; color: var(--text2); margin-bottom: 20px; }
+/* ── EMPTY STATE ── */
+.empty-state {
+  text-align: center;
+  padding: 32px 20px;
+  color: var(--text3);
+}
+.empty-icon { font-size: 36px; margin-bottom: 10px; }
+.empty-text { font-size: 14px; }
+/* ── ACTIONS ROW ── */
+.actions-row {
+  display: flex; align-items: center; gap: 8px;
+  flex-wrap: wrap;
+}
+/* ── INLINE CALC RESULT ── */
+.calc-inline {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px;
+  background: var(--accent-bg);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+}
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .header-inner { padding: 0 14px; }
+  .app { padding: 16px 14px; }
+  .form-grid-3 { grid-template-columns: 1fr 1fr; }
+  .ing-grid { grid-template-columns: 1fr 1fr; }
+}
+/* ── ANIMATE TAB CONTENT ── */
+.tab-content { animation: fadeIn 0.2s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+/* ── CATEGORY TAG ── */
+.cat-tag {
+  display: inline-flex; align-items: center;
+  padding: 2px 8px;
+  border-radius: 100px;
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--border);
+  color: var(--text3);
+}
+/* ── SUMMARY TABLE ── */
+.summary-table { width: 100%; border-collapse: collapse; }
+.summary-table tr { border-bottom: 1px solid var(--border); }
+.summary-table tr:last-child { border-bottom: none; }
+.summary-table td { padding: 8px 0; font-size: 13px; }
+.summary-table td:last-child { text-align: right; font-weight: 600; }
+.summary-table .total-row td { font-weight: 700; font-size: 15px; color: var(--text); padding-top: 12px; }
+/* ── WATERMARK / BRANDING ── */
+.pg-watermark {
+  text-align: center;
+  padding: 24px;
+  color: var(--text3);
+  font-size: 12px;
+}
+.pg-watermark strong { color: var(--accent); font-family: var(--font-display); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-inner">
+    <a href="#" class="logo">
+      <div class="logo-icon">💰</div>
+      Price<span>Go</span>
+    </a>
+    <div class="header-right">
+      <select class="currency-select" id="currencySelect">
+        <option value="CRC">₡ CRC</option>
+        <option value="USD">$ USD</option>
+        <option value="EUR">€ EUR</option>
+        <option value="MXN">$ MXN</option>
+        <option value="COP">$ COP</option>
+      </select>
+      <button class="btn-icon" id="darkToggle" title="Modo oscuro">🌙</button>
+      <button class="btn-icon" id="exportPdfBtn" title="Exportar PDF">📄</button>
+      <button class="btn-icon" id="exportXlsBtn" title="Exportar Excel">📊</button>
+    </div>
+  </div>
+</header>
+
+<!-- TOAST -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- APP -->
+<div class="app">
+  <!-- LEFT COLUMN -->
+  <div class="main-col">
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab active" data-tab="ingredientes">🧂 Ingredientes</button>
+      <button class="tab" data-tab="productos">🍔 Productos</button>
+      <button class="tab" data-tab="historial">📋 Historial</button>
+    </div>
+
+    <!-- ═══ TAB: INGREDIENTES ═══ -->
+    <div id="tab-ingredientes" class="tab-content">
+      <div class="section-title">Costo por ingrediente</div>
+      <p class="section-sub">Calcula el costo unitario de cada ingrediente o insumo que usás.</p>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="card-title-icon icon-orange">📦</div>
+            Nuevo ingrediente
+          </div>
+          <button class="btn btn-primary btn-sm" id="addIngBtn">+ Agregar</button>
+        </div>
+
+        <div class="form-grid-3" id="newIngForm">
+          <div class="field">
+            <label>Nombre</label>
+            <input type="text" id="ingName" placeholder="Ej: Coca Cola">
+          </div>
+          <div class="field">
+            <label>Precio paquete</label>
+            <input type="number" id="ingPrice" placeholder="0" min="0" step="0.01">
+          </div>
+          <div class="field">
+            <label>Cantidad total</label>
+            <input type="number" id="ingQty" placeholder="0" min="0" step="0.01">
+          </div>
+          <div class="field">
+            <label>Unidad</label>
+            <select id="ingUnit">
+              <option value="unidades">unidades</option>
+              <option value="gramos">gramos</option>
+              <option value="ml">ml</option>
+              <option value="litros">litros</option>
+              <option value="kg">kg</option>
+              <option value="tazas">tazas</option>
+              <option value="cucharadas">cucharadas</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Categoría</label>
+            <select id="ingCat">
+              <option value="general">General</option>
+              <option value="bebidas">Bebidas</option>
+              <option value="alimentos">Alimentos</option>
+              <option value="empaque">Empaque</option>
+              <option value="ingrediente">Ingrediente</option>
+            </select>
+          </div>
+        </div>
+        <div id="ingCalcResult" style="margin-top:12px;display:none;"></div>
+      </div>
+
+      <!-- INGREDIENT LIST -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="card-title-icon icon-blue">📋</div>
+            Mis ingredientes
+          </div>
+          <span id="ingCount" class="badge badge-blue">0</span>
+        </div>
+        <div class="ingredient-list" id="ingredientList">
+          <div class="empty-state">
+            <div class="empty-icon">🧂</div>
+            <div class="empty-text">Agregá tu primer ingrediente arriba</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ TAB: PRODUCTOS ═══ -->
+    <div id="tab-productos" class="tab-content" style="display:none">
+      <div class="section-title">Productos finales</div>
+      <p class="section-sub">Armá recetas, calculá costos y definí tu precio de venta ideal.</p>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="card-title-icon icon-green">🍔</div>
+            Nuevo producto
+          </div>
+          <button class="btn btn-primary btn-sm" id="addProductBtn">+ Crear</button>
+        </div>
+        <div class="form-grid">
+          <div class="field">
+            <label>Nombre del producto</label>
+            <input type="text" id="prodName" placeholder="Ej: Granizado Coca Cola">
+          </div>
+          <div class="field">
+            <label>Emoji / Ícono</label>
+            <input type="text" id="prodEmoji" placeholder="🥤" maxlength="2">
+          </div>
+          <div class="field">
+            <label>Categoría</label>
+            <select id="prodCat">
+              <option value="bebidas">🥤 Bebidas</option>
+              <option value="comidas">🍔 Comidas</option>
+              <option value="postres">🍰 Postres</option>
+              <option value="snacks">🍿 Snacks</option>
+              <option value="otros">📦 Otros</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product Selector + Composer -->
+      <div class="form-grid" style="gap:16px">
+        <div>
+          <div class="card" style="margin-bottom:0">
+            <div class="card-header">
+              <div class="card-title">
+                <div class="card-title-icon icon-amber">📂</div>
+                Mis productos
+              </div>
+            </div>
+            <div id="productList">
+              <div class="empty-state">
+                <div class="empty-icon">🛒</div>
+                <div class="empty-text">Sin productos aún</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:0" id="recipeCard">
+            <div class="card-header">
+              <div class="card-title">
+                <div class="card-title-icon icon-green">📝</div>
+                <span id="recipeTitle">Receta</span>
+              </div>
+              <button class="btn btn-secondary btn-sm" id="addCompBtn">+ Ingrediente</button>
+            </div>
+            <div id="noRecipeMsg" class="empty-state">
+              <div class="empty-icon">👈</div>
+              <div class="empty-text">Seleccioná un producto</div>
+            </div>
+            <div id="compList" class="comp-list" style="display:none"></div>
+            <div id="recipeFooter" style="display:none; margin-top:16px;">
+              <div class="divider" style="margin:12px 0"></div>
+              <!-- Costos extras -->
+              <div class="form-grid" style="margin-bottom:12px">
+                <div class="field">
+                  <label>% Ganancia deseada</label>
+                  <div class="slider-wrap">
+                    <input type="range" id="marginSlider" min="0" max="90" value="60">
+                    <div class="slider-labels"><span>0%</span><span id="marginVal">60%</span><span>90%</span></div>
+                  </div>
+                </div>
+                <div class="field">
+                  <label>% Impuesto</label>
+                  <input type="number" id="taxPct" value="13" min="0" max="100" step="0.5">
+                </div>
+                <div class="field">
+                  <label>% Comisión SINPE/Tarjeta</label>
+                  <input type="number" id="commPct" value="3" min="0" max="20" step="0.5">
+                </div>
+                <div class="field">
+                  <label>Costos extras (fijos)</label>
+                  <input type="number" id="extraCost" value="0" min="0">
+                </div>
+              </div>
+              <table class="summary-table" id="summaryTable"></table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ TAB: HISTORIAL ═══ -->
+    <div id="tab-historial" class="tab-content" style="display:none">
+      <div class="section-title">Historial de precios</div>
+      <p class="section-sub">Revisá todos tus productos guardados y sus cálculos.</p>
+      <div class="card">
+        <div id="historialList">
+          <div class="empty-state">
+            <div class="empty-icon">📋</div>
+            <div class="empty-text">Guardá un producto para verlo aquí</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main-col -->
+
+  <!-- RIGHT COLUMN: DASHBOARD -->
+  <div class="sidebar">
+    <div class="sidebar-sticky">
+
+      <!-- Active product metrics -->
+      <div class="metric-card">
+        <div class="metric-label">💰 Costo total del producto</div>
+        <div class="metric-value" id="dashCosto">—</div>
+        <div class="metric-sub" id="dashCostoSub">Seleccioná o calculá un producto</div>
+      </div>
+
+      <div class="metrics-grid">
+        <div class="mini-metric">
+          <div class="label">💵 Precio sugerido</div>
+          <div class="value" id="dashPrecio" style="color:var(--green)">—</div>
+        </div>
+        <div class="mini-metric">
+          <div class="label">📈 Ganancia</div>
+          <div class="value" id="dashGanancia" style="color:var(--accent)">—</div>
+        </div>
+        <div class="mini-metric">
+          <div class="label">🎯 Margen</div>
+          <div class="value" id="dashMargen">—</div>
+        </div>
+        <div class="mini-metric">
+          <div class="label">🚀 ROI</div>
+          <div class="value" id="dashROI">—</div>
+        </div>
+      </div>
+
+      <!-- Margin bar -->
+      <div class="metric-card">
+        <div class="metric-label">📊 Distribución del precio</div>
+        <div class="chart-wrap">
+          <canvas id="donutChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="card" style="padding:14px">
+        <div class="card-title" style="margin-bottom:12px; font-size:13px">
+          <div class="card-title-icon icon-blue" style="width:22px;height:22px;font-size:11px">⚡</div>
+          Acciones rápidas
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button class="btn btn-secondary btn-full btn-sm" id="saveProductBtn">💾 Guardar producto</button>
+          <button class="btn btn-secondary btn-full btn-sm" id="duplicateBtn">📋 Duplicar receta</button>
+          <button class="btn btn-secondary btn-full btn-sm" id="exportPdfBtn2">📄 Exportar PDF</button>
+          <button class="btn btn-secondary btn-full btn-sm" id="exportXlsBtn2">📊 Exportar Excel</button>
+        </div>
+      </div>
+
+      <div class="pg-watermark">Hecho con ❤️ para emprendedores · <strong>PriceGo</strong></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════
+// STATE
+// ══════════════════════════════════════
+const CURRENCIES = {
+  CRC: { sym: '₡', name: 'Colón' },
+  USD: { sym: '$', name: 'Dólar' },
+  EUR: { sym: '€', name: 'Euro' },
+  MXN: { sym: '$', name: 'Peso MX' },
+  COP: { sym: '$', name: 'Peso CO' },
+};
+
+let state = {
+  currency: 'CRC',
+  ingredients: [],
+  products: [],
+  activeProductId: null,
+  history: [],
+  darkMode: false,
+};
+
+// Load from localStorage
+(function load() {
+  try {
+    const saved = localStorage.getItem('pricego_state');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      state = { ...state, ...parsed };
+    }
+  } catch(e) {}
+})();
+
+function save() {
+  localStorage.setItem('pricego_state', JSON.stringify(state));
+}
+
+function sym() { return CURRENCIES[state.currency]?.sym || '₡'; }
+function fmt(n) { return sym() + Number(n || 0).toLocaleString('es-CR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }); }
+
+// ══════════════════════════════════════
+// DARK MODE
+// ══════════════════════════════════════
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', state.darkMode ? 'dark' : 'light');
+  document.getElementById('darkToggle').textContent = state.darkMode ? '☀️' : '🌙';
+}
+applyTheme();
+document.getElementById('darkToggle').addEventListener('click', () => {
+  state.darkMode = !state.darkMode;
+  applyTheme(); save();
+});
+
+// ══════════════════════════════════════
+// CURRENCY
+// ══════════════════════════════════════
+document.getElementById('currencySelect').value = state.currency;
+document.getElementById('currencySelect').addEventListener('change', e => {
+  state.currency = e.target.value;
+  save(); renderAll();
+});
+
+// ══════════════════════════════════════
+// TABS
+// ══════════════════════════════════════
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const id = tab.dataset.tab;
+    document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+    document.getElementById('tab-' + id).style.display = 'block';
+    if (id === 'historial') renderHistorial();
+  });
+});
+
+// ══════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════
+function toast(msg) {
+  const wrap = document.getElementById('toastWrap');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  wrap.appendChild(t);
+  setTimeout(() => t.remove(), 2800);
+}
+
+// ══════════════════════════════════════
+// INGREDIENTS
+// ══════════════════════════════════════
+function calcUnitCost(price, qty) {
+  if (!price || !qty || qty === 0) return 0;
+  return price / qty;
+}
+
+document.getElementById('addIngBtn').addEventListener('click', () => {
+  const name = document.getElementById('ingName').value.trim();
+  const price = parseFloat(document.getElementById('ingPrice').value);
+  const qty = parseFloat(document.getElementById('ingQty').value);
+  const unit = document.getElementById('ingUnit').value;
+  const cat = document.getElementById('ingCat').value;
+
+  if (!name) { toast('⚠️ Agregá el nombre del ingrediente'); return; }
+  if (!price || !qty) { toast('⚠️ Ingresá precio y cantidad'); return; }
+
+  const unitCost = calcUnitCost(price, qty);
+
+  state.ingredients.push({ id: Date.now(), name, price, qty, unit, cat, unitCost });
+  save();
+
+  // Clear
+  document.getElementById('ingName').value = '';
+  document.getElementById('ingPrice').value = '';
+  document.getElementById('ingQty').value = '';
+
+  renderIngredients();
+  toast(`✅ ${name} agregado · ${fmt(unitCost)} / ${unit}`);
+
+  // Show inline result
+  const res = document.getElementById('ingCalcResult');
+  res.style.display = 'block';
+  res.innerHTML = `<div class="calc-inline">💡 Costo por ${unit}: <strong>${fmt(unitCost)}</strong> &nbsp;|&nbsp; Paquete de ${qty} ${unit} = ${fmt(price)}</div>`;
+});
+
+function renderIngredients() {
+  const list = document.getElementById('ingredientList');
+  const count = document.getElementById('ingCount');
+  count.textContent = state.ingredients.length;
+
+  if (!state.ingredients.length) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">🧂</div><div class="empty-text">Agregá tu primer ingrediente arriba</div></div>`;
+    return;
+  }
+
+  list.innerHTML = state.ingredients.map(ing => `
+    <div class="ingredient-row" id="ing-${ing.id}">
+      <div class="ingredient-row-header">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="ingredient-name-badge">${ing.name}</span>
+          <span class="cat-tag">${ing.cat}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="ingredient-result">${fmt(ing.unitCost)} / ${ing.unit}</span>
+          <button class="btn btn-ghost btn-sm" onclick="deleteIngredient(${ing.id})">🗑</button>
+        </div>
+      </div>
+      <div class="ing-grid">
+        <div class="field"><label>Nombre</label><input type="text" value="${ing.name}" onchange="updateIng(${ing.id},'name',this.value)"></div>
+        <div class="field"><label>Precio paquete</label><input type="number" value="${ing.price}" onchange="updateIng(${ing.id},'price',+this.value)"></div>
+        <div class="field"><label>Cantidad (${ing.unit})</label><input type="number" value="${ing.qty}" onchange="updateIng(${ing.id},'qty',+this.value)"></div>
+        <div class="field"><label>Unidad</label>
+          <select onchange="updateIng(${ing.id},'unit',this.value)">
+            ${['unidades','gramos','ml','litros','kg','tazas','cucharadas'].map(u => `<option ${u===ing.unit?'selected':''}>${u}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function updateIng(id, field, val) {
+  const ing = state.ingredients.find(i => i.id === id);
+  if (!ing) return;
+  ing[field] = val;
+  ing.unitCost = calcUnitCost(ing.price, ing.qty);
+  save();
+  // Update badge
+  const row = document.getElementById('ing-' + id);
+  if (row) {
+    const badge = row.querySelector('.ingredient-result');
+    if (badge) badge.textContent = `${fmt(ing.unitCost)} / ${ing.unit}`;
+  }
+  renderProductRecipe();
+  updateDashboard();
+}
+
+function deleteIngredient(id) {
+  state.ingredients = state.ingredients.filter(i => i.id !== id);
+  // Remove from any product component
+  state.products.forEach(p => {
+    p.components = p.components.filter(c => c.ingId !== id);
+  });
+  save();
+  renderIngredients();
+  renderProductRecipe();
+  updateDashboard();
+  toast('🗑 Ingrediente eliminado');
+}
+
+// ══════════════════════════════════════
+// PRODUCTS
+// ══════════════════════════════════════
+document.getElementById('addProductBtn').addEventListener('click', () => {
+  const name = document.getElementById('prodName').value.trim();
+  const emoji = document.getElementById('prodEmoji').value || '🍔';
+  const cat = document.getElementById('prodCat').value;
+
+  if (!name) { toast('⚠️ Ingresá el nombre del producto'); return; }
+
+  const prod = { id: Date.now(), name, emoji, cat, components: [] };
+  state.products.push(prod);
+  state.activeProductId = prod.id;
+  save();
+
+  document.getElementById('prodName').value = '';
+  document.getElementById('prodEmoji').value = '';
+
+  renderProductList();
+  renderProductRecipe();
+  toast(`✅ Producto "${name}" creado`);
+});
+
+function renderProductList() {
+  const list = document.getElementById('productList');
+  if (!state.products.length) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">🛒</div><div class="empty-text">Sin productos aún</div></div>`;
+    return;
+  }
+  list.innerHTML = state.products.map(p => {
+    const cost = calcProductCost(p);
+    const price = calcSuggestedPrice(cost);
+    return `
+      <div class="product-item ${p.id === state.activeProductId ? 'active' : ''}" onclick="selectProduct(${p.id})">
+        <div class="product-emoji">${p.emoji}</div>
+        <div class="product-info">
+          <div class="product-name">${p.name}</div>
+          <div class="product-meta">${p.components.length} ingredientes · ${p.cat}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+          <div class="product-price">${fmt(price)}</div>
+          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();deleteProduct(${p.id})">🗑</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function selectProduct(id) {
+  state.activeProductId = id;
+  save();
+  renderProductList();
+  renderProductRecipe();
+  updateDashboard();
+}
+
+function deleteProduct(id) {
+  state.products = state.products.filter(p => p.id !== id);
+  if (state.activeProductId === id) state.activeProductId = null;
+  save();
+  renderProductList();
+  renderProductRecipe();
+  updateDashboard();
+  toast('🗑 Producto eliminado');
+}
+
+function calcProductCost(product) {
+  return product.components.reduce((sum, comp) => {
+    const ing = state.ingredients.find(i => i.id === comp.ingId);
+    if (!ing) return sum;
+    return sum + ing.unitCost * comp.qty;
+  }, 0);
+}
+
+function getSettings() {
+  const margin = parseFloat(document.getElementById('marginSlider')?.value || 60) / 100;
+  const tax = parseFloat(document.getElementById('taxPct')?.value || 0) / 100;
+  const comm = parseFloat(document.getElementById('commPct')?.value || 0) / 100;
+  const extra = parseFloat(document.getElementById('extraCost')?.value || 0);
+  return { margin, tax, comm, extra };
+}
+
+function calcSuggestedPrice(cost) {
+  const { margin, tax, comm, extra } = getSettings();
+  const totalCost = cost + extra;
+  const baseSugg = totalCost / (1 - margin);
+  const withComm = baseSugg / (1 - comm);
+  const withTax = withComm * (1 + tax);
+  return withTax;
+}
+
+function renderProductRecipe() {
+  const prod = state.products.find(p => p.id === state.activeProductId);
+  const noMsg = document.getElementById('noRecipeMsg');
+  const compList = document.getElementById('compList');
+  const footer = document.getElementById('recipeFooter');
+  const titleEl = document.getElementById('recipeTitle');
+
+  if (!prod) {
+    noMsg.style.display = 'block';
+    compList.style.display = 'none';
+    footer.style.display = 'none';
+    titleEl.textContent = 'Receta';
+    return;
+  }
+
+  titleEl.textContent = `${prod.emoji} ${prod.name}`;
+  noMsg.style.display = 'none';
+  compList.style.display = 'flex';
+  footer.style.display = 'block';
+
+  if (!prod.components.length) {
+    compList.innerHTML = `<div class="empty-state"><div class="empty-icon">🧪</div><div class="empty-text">Agregá ingredientes a esta receta</div></div>`;
+    updateSummaryTable(prod);
+    updateDashboard();
+    return;
+  }
+
+  compList.innerHTML = prod.components.map(comp => {
+    const ing = state.ingredients.find(i => i.id === comp.ingId);
+    if (!ing) return '';
+    const cost = ing.unitCost * comp.qty;
+    return `
+      <div class="comp-row">
+        <div class="comp-name">${ing.name}</div>
+        <input class="comp-qty" type="number" value="${comp.qty}" min="0" step="0.1"
+          onchange="updateComp(${prod.id},${comp.id},+this.value)">
+        <div class="comp-unit">${ing.unit}</div>
+        <div class="comp-cost">${fmt(cost)}</div>
+        <button class="btn btn-ghost btn-sm" onclick="deleteComp(${prod.id},${comp.id})">🗑</button>
+      </div>
+    `;
+  }).join('');
+
+  updateSummaryTable(prod);
+  updateDashboard();
+}
+
+function updateSummaryTable(prod) {
+  const cost = calcProductCost(prod);
+  const { margin, tax, comm, extra } = getSettings();
+  const totalCost = cost + extra;
+  const baseSugg = totalCost / (1 - margin);
+  const commAmt = baseSugg * comm / (1 - comm);
+  const taxAmt = (baseSugg + commAmt) * tax;
+  const finalPrice = baseSugg + commAmt + taxAmt;
+  const ganancia = finalPrice - totalCost;
+  const margenReal = finalPrice ? (ganancia / finalPrice * 100) : 0;
+  const roi = totalCost ? (ganancia / totalCost * 100) : 0;
+
+  const tbl = document.getElementById('summaryTable');
+  tbl.innerHTML = `
+    <tr><td style="color:var(--text3)">Costo ingredientes</td><td>${fmt(cost)}</td></tr>
+    <tr><td style="color:var(--text3)">Costos extras</td><td>${fmt(extra)}</td></tr>
+    <tr><td style="color:var(--text3)">Costo total</td><td>${fmt(totalCost)}</td></tr>
+    <tr><td style="color:var(--text3)">Margen deseado (${(margin*100).toFixed(0)}%)</td><td style="color:var(--accent)">${fmt(baseSugg - totalCost)}</td></tr>
+    <tr><td style="color:var(--text3)">Comisión SINPE/Tarjeta</td><td>${fmt(commAmt)}</td></tr>
+    <tr><td style="color:var(--text3)">Impuesto (${(tax*100).toFixed(0)}%)</td><td>${fmt(taxAmt)}</td></tr>
+    <tr class="total-row"><td>💵 Precio de venta</td><td style="color:var(--green)">${fmt(finalPrice)}</td></tr>
+    <tr><td style="color:var(--text3)">Ganancia neta</td><td style="color:var(--green)">${fmt(ganancia)}</td></tr>
+    <tr><td style="color:var(--text3)">Margen real</td><td>${margenReal.toFixed(1)}%</td></tr>
+    <tr><td style="color:var(--text3)">ROI</td><td>${roi.toFixed(1)}%</td></tr>
+  `;
+}
+
+// Slider live update
+document.getElementById('marginSlider')?.addEventListener('input', function() {
+  document.getElementById('marginVal').textContent = this.value + '%';
+  renderProductRecipe();
+  updateDashboard();
+});
+['taxPct','commPct','extraCost'].forEach(id => {
+  document.getElementById(id)?.addEventListener('input', () => { renderProductRecipe(); updateDashboard(); });
+});
+
+// Add component
+document.getElementById('addCompBtn').addEventListener('click', () => {
+  const prod = state.products.find(p => p.id === state.activeProductId);
+  if (!prod) { toast('⚠️ Seleccioná un producto primero'); return; }
+  if (!state.ingredients.length) { toast('⚠️ Primero agregá ingredientes'); return; }
+
+  // Pick first unused ingredient or show picker
+  const unused = state.ingredients.find(i => !prod.components.find(c => c.ingId === i.id));
+  const ing = unused || state.ingredients[0];
+
+  prod.components.push({ id: Date.now(), ingId: ing.id, qty: 1 });
+  save();
+  renderProductRecipe();
+  toast(`➕ ${ing.name} agregado a la receta`);
+});
+
+function updateComp(prodId, compId, qty) {
+  const prod = state.products.find(p => p.id === prodId);
+  if (!prod) return;
+  const comp = prod.components.find(c => c.id === compId);
+  if (comp) comp.qty = qty;
+  save();
+  renderProductRecipe();
+  updateDashboard();
+}
+
+function deleteComp(prodId, compId) {
+  const prod = state.products.find(p => p.id === prodId);
+  if (!prod) return;
+  prod.components = prod.components.filter(c => c.id !== compId);
+  save();
+  renderProductRecipe();
+  updateDashboard();
+  toast('🗑 Ingrediente removido');
+}
+
+// ══════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════
+let donutChart = null;
+
+function updateDashboard() {
+  const prod = state.products.find(p => p.id === state.activeProductId);
+
+  if (!prod || !prod.components.length) {
+    document.getElementById('dashCosto').textContent = '—';
+    document.getElementById('dashCostoSub').textContent = 'Seleccioná o calculá un producto';
+    document.getElementById('dashPrecio').textContent = '—';
+    document.getElementById('dashGanancia').textContent = '—';
+    document.getElementById('dashMargen').textContent = '—';
+    document.getElementById('dashROI').textContent = '—';
+    renderDonut(0, 0, 0);
+    return;
+  }
+
+  const cost = calcProductCost(prod);
+  const { margin, tax, comm, extra } = getSettings();
+  const totalCost = cost + extra;
+  const baseSugg = totalCost / (1 - margin);
+  const commAmt = baseSugg * comm / (1 - comm);
+  const taxAmt = (baseSugg + commAmt) * tax;
+  const finalPrice = baseSugg + commAmt + taxAmt;
+  const ganancia = finalPrice - totalCost;
+  const margenReal = finalPrice ? (ganancia / finalPrice * 100) : 0;
+  const roi = totalCost ? (ganancia / totalCost * 100) : 0;
+
+  document.getElementById('dashCosto').textContent = fmt(totalCost);
+  document.getElementById('dashCostoSub').textContent = `${prod.name} · ${prod.components.length} ingredientes`;
+  document.getElementById('dashPrecio').textContent = fmt(finalPrice);
+  document.getElementById('dashGanancia').textContent = fmt(ganancia);
+  document.getElementById('dashMargen').textContent = margenReal.toFixed(1) + '%';
+  document.getElementById('dashROI').textContent = roi.toFixed(0) + '%';
+
+  renderDonut(totalCost, ganancia, commAmt + taxAmt);
+}
+
+function renderDonut(cost, profit, fees) {
+  const ctx = document.getElementById('donutChart').getContext('2d');
+  const total = cost + profit + fees;
+
+  if (donutChart) donutChart.destroy();
+
+  if (!total) {
+    donutChart = null;
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    return;
+  }
+
+  const isDark = state.darkMode;
+
+  donutChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Costo', 'Ganancia', 'Fees'],
+      datasets: [{
+        data: [cost, profit, fees],
+        backgroundColor: ['#ff4f17', '#16a34a', '#2563eb'],
+        borderWidth: 0,
+        hoverOffset: 6,
+      }]
+    },
+    options: {
+      cutout: '68%',
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            font: { family: 'DM Sans', size: 11 },
+            color: isDark ? '#a09880' : '#5c574e',
+            padding: 12,
+            boxWidth: 10,
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => ` ${ctx.label}: ${fmt(ctx.raw)}`
+          }
+        }
+      },
+      animation: { animateRotate: true, duration: 500 }
+    }
+  });
+}
+
+// ══════════════════════════════════════
+// SAVE / DUPLICATE
+// ══════════════════════════════════════
+function saveCurrentProduct() {
+  const prod = state.products.find(p => p.id === state.activeProductId);
+  if (!prod) { toast('⚠️ Seleccioná un producto primero'); return; }
+
+  const cost = calcProductCost(prod);
+  const price = calcSuggestedPrice(cost);
+  const ganancia = price - cost;
+  const margen = price ? (ganancia / price * 100) : 0;
+
+  state.history.unshift({
+    id: Date.now(),
+    date: new Date().toLocaleDateString('es-CR'),
+    prodId: prod.id,
+    name: prod.name,
+    emoji: prod.emoji,
+    currency: state.currency,
+    cost: cost,
+    price: price,
+    ganancia: ganancia,
+    margen: margen,
+    components: prod.components.map(c => {
+      const ing = state.ingredients.find(i => i.id === c.ingId);
+      return { name: ing?.name, qty: c.qty, unit: ing?.unit, cost: (ing?.unitCost || 0) * c.qty };
+    })
+  });
+
+  save();
+  toast(`💾 "${prod.name}" guardado en historial`);
+}
+
+document.getElementById('saveProductBtn').addEventListener('click', saveCurrentProduct);
+document.getElementById('duplicateBtn').addEventListener('click', () => {
+  const prod = state.products.find(p => p.id === state.activeProductId);
+  if (!prod) { toast('⚠️ Seleccioná un producto primero'); return; }
+  const copy = JSON.parse(JSON.stringify(prod));
+  copy.id = Date.now();
+  copy.name = prod.name + ' (copia)';
+  state.products.push(copy);
+  state.activeProductId = copy.id;
+  save();
+  renderProductList();
+  renderProductRecipe();
+  toast(`📋 Receta duplicada`);
+});
+
+// ══════════════════════════════════════
+// HISTORIAL
+// ══════════════════════════════════════
+function renderHistorial() {
+  const list = document.getElementById('historialList');
+  if (!state.history.length) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">Guardá un producto para verlo aquí</div></div>`;
+    return;
+  }
+  list.innerHTML = state.history.map(h => `
+    <div class="product-item" style="cursor:default">
+      <div class="product-emoji">${h.emoji || '📦'}</div>
+      <div class="product-info">
+        <div class="product-name">${h.name}</div>
+        <div class="product-meta">${h.date} · ${h.currency} · Margen: ${h.margen?.toFixed(1)}%</div>
+      </div>
+      <div style="text-align:right">
+        <div class="product-price">${CURRENCIES[h.currency]?.sym || '₡'}${Number(h.price||0).toLocaleString('es-CR',{maximumFractionDigits:0})}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">Costo: ${CURRENCIES[h.currency]?.sym || '₡'}${Number(h.cost||0).toLocaleString('es-CR',{maximumFractionDigits:0})}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ══════════════════════════════════════
+// EXPORT PDF
+// ══════════════════════════════════════
+function exportPDF() {
+  const prod = state.products.find(p => p.id === state.activeProductId);
+  if (!prod) { toast('⚠️ Seleccioná un producto primero'); return; }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(22);
+  doc.setTextColor(255, 79, 23);
+  doc.text('PriceGo', 20, 24);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(12);
+  doc.setTextColor(30, 24, 21);
+  doc.text(`Producto: ${prod.emoji} ${prod.name}`, 20, 36);
+  doc.setFontSize(10);
+  doc.setTextColor(120, 110, 100);
+  doc.text(`Moneda: ${state.currency}  |  Fecha: ${new Date().toLocaleDateString('es-CR')}`, 20, 44);
+
+  let y = 56;
+  doc.setFontSize(11);
+  doc.setTextColor(30,24,21);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Ingredientes:', 20, y); y += 8;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+
+  prod.components.forEach(comp => {
+    const ing = state.ingredients.find(i => i.id === comp.ingId);
+    if (!ing) return;
+    const cost = ing.unitCost * comp.qty;
+    doc.text(`• ${ing.name}: ${comp.qty} ${ing.unit} = ${fmt(cost)}`, 24, y);
+    y += 6;
+  });
+
+  const cost = calcProductCost(prod);
+  const { margin, tax, comm, extra } = getSettings();
+  const totalCost = cost + extra;
+  const baseSugg = totalCost / (1 - margin);
+  const commAmt = baseSugg * comm / (1 - comm);
+  const taxAmt = (baseSugg + commAmt) * tax;
+  const finalPrice = baseSugg + commAmt + taxAmt;
+  const ganancia = finalPrice - totalCost;
+  const margenReal = finalPrice ? (ganancia / finalPrice * 100).toFixed(1) : 0;
+
+  y += 6;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.text('Resumen financiero:', 20, y); y += 8;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  [
+    ['Costo total', fmt(totalCost)],
+    ['Precio sugerido', fmt(finalPrice)],
+    ['Ganancia neta', fmt(ganancia)],
+    ['Margen real', margenReal + '%'],
+  ].forEach(([k, v]) => {
+    doc.text(k, 24, y);
+    doc.text(v, 140, y, { align: 'right' });
+    y += 6;
+  });
+
+  doc.setFontSize(8);
+  doc.setTextColor(180, 160, 140);
+  doc.text('Generado por PriceGo · pricego.app', 20, 285);
+
+  doc.save(`PriceGo-${prod.name}.pdf`);
+  toast('📄 PDF exportado');
+}
+
+document.getElementById('exportPdfBtn').addEventListener('click', exportPDF);
+document.getElementById('exportPdfBtn2').addEventListener('click', exportPDF);
+
+// ══════════════════════════════════════
+// EXPORT EXCEL
+// ══════════════════════════════════════
+function exportExcel() {
+  const prod = state.products.find(p => p.id === state.activeProductId);
+  if (!prod) { toast('⚠️ Seleccioná un producto primero'); return; }
+
+  const cost = calcProductCost(prod);
+  const price = calcSuggestedPrice(cost);
+  const ganancia = price - cost;
+  const margen = price ? (ganancia / price * 100).toFixed(1) : 0;
+
+  const rows = [
+    ['PriceGo — ' + prod.name, '', '', ''],
+    ['Moneda: ' + state.currency, '', 'Fecha:', new Date().toLocaleDateString('es-CR')],
+    [],
+    ['Ingrediente', 'Cantidad', 'Unidad', 'Costo'],
+    ...prod.components.map(c => {
+      const ing = state.ingredients.find(i => i.id === c.ingId);
+      if (!ing) return [];
+      return [ing.name, c.qty, ing.unit, ing.unitCost * c.qty];
+    }),
+    [],
+    ['Costo total', cost, '', ''],
+    ['Precio sugerido', price, '', ''],
+    ['Ganancia', ganancia, '', ''],
+    ['Margen %', margen + '%', '', ''],
+  ];
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  XLSX.utils.book_append_sheet(wb, ws, prod.name.slice(0,30));
+  XLSX.writeFile(wb, `PriceGo-${prod.name}.xlsx`);
+  toast('📊 Excel exportado');
+}
+
+document.getElementById('exportXlsBtn').addEventListener('click', exportExcel);
+document.getElementById('exportXlsBtn2').addEventListener('click', exportExcel);
+
+// ══════════════════════════════════════
+// RENDER ALL
+// ══════════════════════════════════════
+function renderAll() {
+  renderIngredients();
+  renderProductList();
+  renderProductRecipe();
+  updateDashboard();
+}
+
+renderAll();
+</script>
+</body>
+</html>
